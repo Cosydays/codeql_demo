@@ -5,10 +5,23 @@ type DeleteEmailRequest struct {
 	Email  string `json:"email"`
 }
 
-func (deleteEmailRequest *DeleteEmailRequest) GetUserId() int64 {
-	return deleteEmailRequest.UserId
+func (p *DeleteEmailRequest) GetUserId() int64 {
+	return p.UserId
 }
 
-func (deleteEmailRequest *DeleteEmailRequest) GetEmail() string {
+func (p *DeleteEmailRequest) GetEmail() string {
+	return p.Email
+}
 
+type UpdateEmailRequest struct {
+	UserId int64  `json:"user_id"`
+	Email  string `json:"email"`
+}
+
+func (p *UpdateEmailRequest) GetUserId() int64 {
+	return p.UserId
+}
+
+func (p *UpdateEmailRequest) GetEmail() string {
+	return p.Email
 }
