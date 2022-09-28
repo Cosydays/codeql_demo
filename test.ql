@@ -88,7 +88,7 @@ class FieldAssignSink extends DataFlow::Node {
             and
             field.getAWrite().writesField(base, field, this)
             and
-            field.getType().getPackage().getPath().regexpMatch("(.*sdk.*)")
+            field.getQualifiedName().regexpMatch("(.*sdk.*)")
             )
     }
 

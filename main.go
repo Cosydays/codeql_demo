@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/Cosydays/codeql_demo/model"
-	"rpc_sdk"
+	"main/model"
+	"main/rpc_sdk"
 )
 
 func DeleteEmail(ctx context.Context, req model.DeleteEmailRequest) {
