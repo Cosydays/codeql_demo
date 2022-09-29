@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"main/model"
-	"main/rpc_sdk"
+	"github.com/Cosydays/codeql_demo/go_util"
+	"github.com/Cosydays/codeql_demo/model"
+	"github.com/Cosydays/codeql_demo/rpc_sdk"
+	"strconv"
 )
 
 func DeleteEmail(ctx context.Context, req model.DeleteEmailRequest) {
@@ -35,6 +37,23 @@ func UpdateEmail(ctx context.Context, req model.UpdateEmailRequest) {
 	rpc_sdk.RpcUpdateEmailInfo(ctx, updateEmailReq)
 }
 
+func CreateEmail(ctx context.Context, req model.CreateEmailRequest) {
+	email := req.GetEmail()
+	email = go_util.NormalizeEmail(email)
+	req.Email = email
+
+	userId := req.GetUserId()
+	queryUserReq := rpc_sdk.NewQueryUserRequest()
+	queryUserReq.SetUserId(strconv.FormatInt(userId, 10))
+	rpc_sdk.RpcQueryUser(ctx, queryUserReq)
+
+	createEmailReq := &rpc_sdk.CreateEmailRequest{
+		NewEmail: email,
+	}
+	rpc_sdk.RpcCreateEmail(ctx, createEmailReq)
+
+}
+
 func main() {
 	ctx := context.Background()
 	deleteEmailReq := model.DeleteEmailRequest{
@@ -42,9 +61,17 @@ func main() {
 		Email:  "test1@email.com",
 	}
 	DeleteEmail(ctx, deleteEmailReq)
+
 	updateEmailReq := model.UpdateEmailRequest{
 		UserId: 456,
 		Email:  "test2@email.com",
 	}
 	UpdateEmail(ctx, updateEmailReq)
+
+	createEmailReq := model.CreateEmailRequest{
+		UserId: 789,
+		Email:  "test3@email.com",
+		Status: "aa",
+	}
+	CreateEmail(ctx, createEmailReq)
 }

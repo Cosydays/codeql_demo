@@ -25,3 +25,21 @@ func (p *UpdateEmailRequest) GetUserId() int64 {
 func (p *UpdateEmailRequest) GetEmail() string {
 	return p.Email
 }
+
+type CreateEmailRequest struct {
+	UserId int64  `json:"user_id"`
+	Email  string `json:"email"`
+	Status string `json:"status"`
+}
+
+func (p *CreateEmailRequest) GetUserId() int64 {
+	return p.UserId
+}
+
+func (p *CreateEmailRequest) GetEmail() string {
+	return p.Email
+}
+
+func (p *CreateEmailRequest) GetStatus() string {
+	return p.Status
+}
