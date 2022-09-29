@@ -1,17 +1,19 @@
+//分析字段流转
+//结果为下游Field，pkgMethod，location
 import go
 import semmle.go.dataflow.TaintTracking3
 import semmle.go.dataflow.DataFlow3
 import DataFlow::PathGraph
 
 module KitexCommon {
+    //对所有的Func都进行污点追踪
     class FunctionModels extends TaintTracking::FunctionModel {
         FunctionInput functionInput;
         FunctionOutput functionOutput;
 
         FunctionModels() {
-          (functionInput.isParameter(0) or functionInput.isParameter(1) or functionInput.isParameter(2) or functionInput.isParameter(3)  or functionInput.isParameter(4) or functionInput.isParameter(5)  or functionInput.isParameter(6) or functionInput.isParameter(7))
-          and
-          (functionOutput.isResult(0) or functionOutput.isResult(1) or functionOutput.isResult(2) or functionOutput.isResult(3) or functionOutput.isResult(4) or functionOutput.isResult(5) or functionOutput.isResult(6) or functionOutput.isResult(7) )
+            functionInput.isParameter([0 .. 7]) and
+            functionOutput.isResult([0 .. 7])
         }
 
         override predicate hasTaintFlow(FunctionInput input, FunctionOutput output) {
@@ -20,31 +22,33 @@ module KitexCommon {
     }
 }
 
+// 将 MethodA 的第二个参数作为source
 class TaintedParam extends DataFlow::Node {
     TaintedParam() {
         any(Parameter parameter |
             parameter.getIndex() = 1
             and
-            parameter.getFunction().getName() = "UpdateEmail")
+            parameter.getFunction().getName() = "CreateEmail")
         =
         this.asParameter()
     }
 }
 
+// 读取字段的Node
 class TaintedFieldRead extends DataFlow::FieldReadNode {
     TaintedFieldRead() {
-        this.getField().getName().regexpMatch("(?i).*email.*")
-        and
-        this.getField().getType() instanceof StringType
+        this.getField().getName().regexpMatch("Email")
     }
 }
 
+// Map的Node
 class TaintedMapAccess extends IndexExpr {
     TaintedMapAccess() {
-        this.getIndex().(StringLit).getValue() = "(?i).*email.*"
+        this.getIndex().(StringLit).getValue() = "Email"
     }
 }
 
+//从MethodA的第一个参数到字段读取/Map读取
 class TaintedStructParamFlowConfig extends TaintTracking3::Configuration {
     TaintedStructParamFlowConfig() {
         this = "TaintedStructParamFlowConfig"
@@ -65,6 +69,7 @@ class TaintedStructParamFlowConfig extends TaintTracking3::Configuration {
       }
 }
 
+//第一次污点追踪：Method的param到struct的field
 class TaintedStructMemberSource extends DataFlow::Node {
     TaintedParam paramSource;
 
@@ -78,6 +83,7 @@ class TaintedStructMemberSource extends DataFlow::Node {
     TaintedParam getParamSource() { result = paramSource }
 }
 
+// 字段赋值的终点
 class FieldAssignSink extends DataFlow::Node {
     string fieldName;
     DataFlow::Node base;
@@ -88,11 +94,12 @@ class FieldAssignSink extends DataFlow::Node {
             and
             field.getAWrite().writesField(base, field, this)
             and
-            field.getQualifiedName().regexpMatch("(.*sdk.*)")
-            )
+            base.getTypeBound().getName().regexpMatch("(.*Request)|(.*Req)"))
     }
 
     string getFieldName() { result = fieldName }
+
+    string getFieldType() {result = this.getBase().getTypeBound().getName()}
 
     DataFlow::Node getBase() { result = base }
 }
@@ -112,9 +119,10 @@ class FieldAssignConfig extends TaintTracking2::Configuration {
 
     override predicate isAdditionalTaintStep(DataFlow::Node fromNode, DataFlow::Node toNode) {
         any(DataFlow::Write w).writesComponent(toNode.(DataFlow::PostUpdateNode).getPreUpdateNode(),  fromNode)
-      }
+    }
 }
 
+// 第二次污点追踪
 class RpcCallSource extends DataFlow::Node {
     TaintedStructMemberSource taintedStructMemberSource;
     FieldAssignSink fieldAssignSink;
@@ -144,6 +152,7 @@ class RpcCallSource extends DataFlow::Node {
     }
 }
 
+// RpcClient的参数为终点
 class RpcParamSink extends DataFlow::Node {
     RpcParamSink() {
         exists(DataFlow::CallNode callNode |
@@ -185,6 +194,7 @@ class RpcCallConfig extends TaintTracking::Configuration {
     }
 }
 
+// 第三次污点追踪
 from
     DataFlow::PathNode source,
     RpcCallSource rpcCallSource,
@@ -204,4 +214,5 @@ select
     rpcCallSource.getFieldAssignSink(),
     rpcCallSource.getFieldAssignSink().getFieldName(),
     rpcCallSource.getTaintedStructMemberSource(),
-    rpcParamSink.getPkgFunc()
+    rpcParamSink.getPkgFunc(),
+    rpcParamSink.asExpr().getLocation().toString()
