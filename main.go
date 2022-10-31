@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/Cosydays/codeql_demo/constant"
 	"github.com/Cosydays/codeql_demo/go_util"
 	"github.com/Cosydays/codeql_demo/model"
+	"github.com/Cosydays/codeql_demo/redis"
 	"github.com/Cosydays/codeql_demo/rpc_sdk"
 	"strconv"
 )
@@ -74,4 +76,6 @@ func main() {
 		Status: "aa",
 	}
 	CreateEmail(ctx, createEmailReq)
+	redisKey := fmt.Sprintf(constant.KpA, "A")
+	redis.Set(redisKey, "v")
 }
