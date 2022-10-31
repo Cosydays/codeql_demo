@@ -28,7 +28,7 @@ class TaintedParam extends DataFlow::Node {
         any(Parameter parameter |
             parameter.getIndex() = 1
             and
-            parameter.getFunction().getName() = "CreateEmail")
+            parameter.getFunction().getName() = "UpdateEmail")
         =
         this.asParameter()
     }
@@ -94,7 +94,8 @@ class FieldAssignSink extends DataFlow::Node {
             and
             field.getAWrite().writesField(base, field, this)
             and
-            base.getTypeBound().getName().regexpMatch("(.*Request)|(.*Req)"))
+            // base.getTypeBound().getName().regexpMatch("(.*Request.*)|(.*Req.*)"))
+            field.getQualifiedName().regexpMatch("(.*sdk.*)"))
     }
 
     string getFieldName() { result = fieldName }
