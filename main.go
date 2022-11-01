@@ -3,10 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/Cosydays/codeql_demo/client"
 	"github.com/Cosydays/codeql_demo/constant"
+	"github.com/Cosydays/codeql_demo/dal"
 	"github.com/Cosydays/codeql_demo/go_util"
 	"github.com/Cosydays/codeql_demo/model"
-	"github.com/Cosydays/codeql_demo/redis"
 	"github.com/Cosydays/codeql_demo/rpc_sdk"
 	"strconv"
 )
@@ -36,7 +37,13 @@ func UpdateEmail(ctx context.Context, req model.UpdateEmailRequest) {
 		Id:    "123",
 		Field: field,
 	}
+
+	//field email flow to rpc
 	rpc_sdk.RpcUpdateEmailInfo(ctx, updateEmailReq)
+
+	//field email flow to redis
+	redisKey := fmt.Sprintf(constant.KpA, "A")
+	dal.SetValue2Redis(ctx, redisKey, email)
 }
 
 func CreateEmail(ctx context.Context, req model.CreateEmailRequest) {
@@ -47,17 +54,37 @@ func CreateEmail(ctx context.Context, req model.CreateEmailRequest) {
 	userId := req.GetUserId()
 	queryUserReq := rpc_sdk.NewQueryUserRequest()
 	queryUserReq.SetUserId(strconv.FormatInt(userId, 10))
-	rpc_sdk.RpcQueryUser(ctx, queryUserReq)
+	userInfo := rpc_sdk.RpcQueryUser(ctx, queryUserReq)
+	if len(userInfo.Birthdate) > 0 {
+		createEmailReq := &rpc_sdk.CreateEmailRequest{
+			NewEmail: email,
+		}
+		//field email flow to rpc
+		rpc_sdk.RpcCreateEmail(ctx, createEmailReq)
+	}
+}
 
-	createEmailReq := &rpc_sdk.CreateEmailRequest{
+func ChangeEmail(ctx context.Context, req model.ChangeEmailRequest) {
+	email := req.GetEmail()
+	userId := req.GetUserId()
+
+	queryUserReq := rpc_sdk.NewQueryUserRequest()
+	queryUserReq.SetUserId(strconv.FormatInt(userId, 10))
+	userInfo := rpc_sdk.RpcQueryUser(ctx, queryUserReq)
+
+	//field email from RpcQueryUser
+	rpcChangeEmailReq := &rpc_sdk.ChangeEmailRequest{
+		OldEmail: userInfo.Email,
 		NewEmail: email,
 	}
-	rpc_sdk.RpcCreateEmail(ctx, createEmailReq)
+	rpc_sdk.RpcChangeEmail(ctx, rpcChangeEmailReq)
 
 }
 
 func main() {
 	ctx := context.Background()
+	client.InitRedisClient(ctx)
+
 	deleteEmailReq := model.DeleteEmailRequest{
 		UserId: 123,
 		Email:  "test1@email.com",
@@ -76,6 +103,10 @@ func main() {
 		Status: "aa",
 	}
 	CreateEmail(ctx, createEmailReq)
-	redisKey := fmt.Sprintf(constant.KpA, "A")
-	redis.Set(redisKey, "v")
+
+	changeEmailReq := model.ChangeEmailRequest{
+		UserId: 123,
+		Email:  "test4@email.com",
+	}
+	ChangeEmail(ctx, changeEmailReq)
 }

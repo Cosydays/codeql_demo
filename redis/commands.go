@@ -5,5 +5,9 @@ import (
 )
 
 func Set(key string, value string) {
-	fmt.Println(key, value)
+	fmt.Println("redis set", key, value)
+}
+
+func Get(key string) string {
+	return "redis value"
 }

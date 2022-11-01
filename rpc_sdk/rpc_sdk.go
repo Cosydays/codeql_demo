@@ -5,6 +5,12 @@ import (
 	"fmt"
 )
 
+type UserInfo struct {
+	Name      string `json:"name"`
+	Birthdate string `json:"birthdate"`
+	Email     string `json:"email"`
+}
+
 //DeleteEmail
 type DeleteEmailRequest struct {
 	Id       string `json:"id"`
@@ -64,6 +70,7 @@ func RpcUpdateEmailInfo(ctx context.Context, req *UpdateEmailRequest) {
 	fmt.Println(req.Field.FieldValue)
 }
 
+//CreateEmail
 type CreateEmailRequest struct {
 	Id       string `json:"id"`
 	NewEmail string `json:"new_email"`
@@ -93,6 +100,47 @@ func RpcCreateEmail(ctx context.Context, req *CreateEmailRequest) {
 	fmt.Println(req.NewEmail)
 }
 
+//ChangeEmail
+type ChangeEmailRequest struct {
+	Id       string `json:"id"`
+	OldEmail string `json:"old_email"`
+	NewEmail string `json:"new_email"`
+}
+
+func NewChangeEmailRequest() *ChangeEmailRequest {
+	return &ChangeEmailRequest{}
+}
+
+func (p *ChangeEmailRequest) GetId() (v string) {
+	return p.Id
+}
+
+func (p *ChangeEmailRequest) GetOldEmail() (v string) {
+	return p.OldEmail
+}
+
+func (p *ChangeEmailRequest) GetNewEmail() (v string) {
+	return p.NewEmail
+}
+
+func (p *ChangeEmailRequest) SetId(v string) {
+	p.Id = v
+}
+
+func (p *ChangeEmailRequest) SetOldEmail(v string) {
+	p.OldEmail = v
+}
+
+func (p *ChangeEmailRequest) SetNewEmail(v string) {
+	p.NewEmail = v
+}
+
+func RpcChangeEmail(ctx context.Context, req *ChangeEmailRequest) {
+	fmt.Println(req.OldEmail)
+	fmt.Println(req.NewEmail)
+}
+
+//QueryUser
 type QueryUserRequest struct {
 	UserId string `json:"user_id"`
 }
@@ -109,36 +157,11 @@ func (p *QueryUserRequest) SetUserId(v string) {
 	p.UserId = v
 }
 
-func RpcQueryUser(ctx context.Context, req *QueryUserRequest) {
-	fmt.Println(req.UserId)
-}
-
-//ChangePhone
-type ChangePhoneReqest struct {
-	Id       string `json:"id"`
-	RpcPhone string `json:"rpc_phone"`
-}
-
-func NewChangePhoneReqest() *ChangePhoneReqest {
-	return &ChangePhoneReqest{}
-}
-
-func (p *ChangePhoneReqest) GetId() (v string) {
-	return p.Id
-}
-
-func (p *ChangePhoneReqest) GetPhone() (v string) {
-	return p.RpcPhone
-}
-
-func (p *ChangePhoneReqest) SetId(v string) {
-	p.Id = v
-}
-
-func (p *ChangePhoneReqest) SetRpcPhone(v string) {
-	p.RpcPhone = v
-}
-
-func ChangePhoneInfo(ctx context.Context, req *ChangePhoneReqest) {
-	fmt.Println(req.RpcPhone)
+func RpcQueryUser(ctx context.Context, req *QueryUserRequest) *UserInfo {
+	userInfo := UserInfo{
+		Name:      "name_test",
+		Birthdate: "99",
+		Email:     "s.@a.com",
+	}
+	return &userInfo
 }

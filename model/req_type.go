@@ -43,3 +43,16 @@ func (p *CreateEmailRequest) GetEmail() string {
 func (p *CreateEmailRequest) GetStatus() string {
 	return p.Status
 }
+
+type ChangeEmailRequest struct {
+	UserId int64  `json:"user_id"`
+	Email  string `json:"email"`
+}
+
+func (p *ChangeEmailRequest) GetUserId() int64 {
+	return p.UserId
+}
+
+func (p *ChangeEmailRequest) GetEmail() string {
+	return p.Email
+}
