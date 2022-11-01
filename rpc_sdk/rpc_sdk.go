@@ -15,6 +15,7 @@ type UserInfo struct {
 type DeleteEmailRequest struct {
 	Id       string `json:"id"`
 	RpcEmail string `json:"rpc_email"`
+	OldEmail string `json:"old_email"`
 }
 
 func NewDeleteEmailRequest() *DeleteEmailRequest {

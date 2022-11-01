@@ -1,8 +1,9 @@
 package model
 
 type DeleteEmailRequest struct {
-	UserId int64  `json:"user_id"`
-	Email  string `json:"email"`
+	UserId int64             `json:"user_id"`
+	Email  string            `json:"email"`
+	Info   map[string]string `json:"info"`
 }
 
 func (p *DeleteEmailRequest) GetUserId() int64 {

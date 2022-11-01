@@ -19,6 +19,8 @@ func DeleteEmail(ctx context.Context, req model.DeleteEmailRequest) {
 	email := req.GetEmail()
 	deleteEmailReq := rpc_sdk.NewDeleteEmailRequest()
 	deleteEmailReq.RpcEmail = email
+	oldEmail := req.Info["old_email"]
+	deleteEmailReq.OldEmail = oldEmail
 	rpc_sdk.RpcDeleteEmailInfo(ctx, deleteEmailReq)
 }
 
@@ -85,9 +87,12 @@ func main() {
 	ctx := context.Background()
 	client.InitRedisClient(ctx)
 
+	infoMap := map[string]string{}
+	infoMap["old_email"] = "test5@email.com"
 	deleteEmailReq := model.DeleteEmailRequest{
 		UserId: 123,
 		Email:  "test1@email.com",
+		Info:   infoMap,
 	}
 	DeleteEmail(ctx, deleteEmailReq)
 
