@@ -35,8 +35,11 @@ func UpdateEmail(ctx context.Context, req model.UpdateEmailRequest) {
 		FieldValue: email,
 	}
 
+	//get field id from Redis
+	id := dal.GetRedisValue(ctx, "id")
+
 	updateEmailReq := &rpc_sdk.UpdateEmailRequest{
-		Id:    "123",
+		Id:    id,
 		Field: field,
 	}
 
@@ -75,12 +78,7 @@ func ChangeEmail(ctx context.Context, req model.ChangeEmailRequest) {
 	userInfo := rpc_sdk.RpcQueryUser(ctx, queryUserReq)
 
 	//field email from RpcQueryUser
-	rpcChangeEmailReq := &rpc_sdk.ChangeEmailRequest{
-		OldEmail: userInfo.Email,
-		NewEmail: email,
-	}
-	rpc_sdk.RpcChangeEmail(ctx, rpcChangeEmailReq)
-
+	rpc_sdk.RpcChangeEmail(ctx, userInfo.Email, email)
 }
 
 func main() {

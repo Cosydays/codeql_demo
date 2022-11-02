@@ -136,9 +136,9 @@ func (p *ChangeEmailRequest) SetNewEmail(v string) {
 	p.NewEmail = v
 }
 
-func RpcChangeEmail(ctx context.Context, req *ChangeEmailRequest) {
-	fmt.Println(req.OldEmail)
-	fmt.Println(req.NewEmail)
+func RpcChangeEmail(ctx context.Context, oldEmail string, newEmail string) {
+	fmt.Println(oldEmail)
+	fmt.Println(newEmail)
 }
 
 //QueryUser
