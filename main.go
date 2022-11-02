@@ -10,6 +10,7 @@ import (
 	"github.com/Cosydays/codeql_demo/model"
 	"github.com/Cosydays/codeql_demo/rpc_sdk"
 	"strconv"
+	"time"
 )
 
 func DeleteEmail(ctx context.Context, req model.DeleteEmailRequest) {
@@ -66,7 +67,15 @@ func CreateEmail(ctx context.Context, req model.CreateEmailRequest) {
 		}
 		//field email flow to rpc
 		rpc_sdk.RpcCreateEmail(ctx, createEmailReq)
+
+		//field email flow to http
+		CallHttp(ctx, email)
 	}
+}
+
+func CallHttp(ctx context.Context, email string) {
+	_, err := go_util.HttpPost(ctx, "test/path", []byte(email), nil, time.Second*30)
+	fmt.Println(err)
 }
 
 func ChangeEmail(ctx context.Context, req model.ChangeEmailRequest) {
