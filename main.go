@@ -50,6 +50,21 @@ func UpdateEmail(ctx context.Context, req model.UpdateEmailRequest) {
 	//field email flow to redis
 	redisKey := fmt.Sprintf(constant.KpA, "A")
 	dal.SetValue2Redis(ctx, redisKey, email)
+
+	//field email from http
+	httpEmail := GetHttpData(ctx, nil)
+	httpField := &rpc_sdk.Field{
+		FieldType:  11,
+		FieldValue: httpEmail,
+	}
+
+	uEReq := &rpc_sdk.UpdateEmailRequest{
+		Id:    id,
+		Field: httpField,
+	}
+	//field email flow to rpc
+	rpc_sdk.RpcUpdateEmailInfo(ctx, uEReq)
+
 }
 
 func CreateEmail(ctx context.Context, req model.CreateEmailRequest) {
@@ -74,8 +89,18 @@ func CreateEmail(ctx context.Context, req model.CreateEmailRequest) {
 }
 
 func CallHttp(ctx context.Context, email string) {
-	_, err := go_util.HttpPost(ctx, "test/path", []byte(email), nil, time.Second*30)
-	fmt.Println(err)
+	_, err := go_util.HttpPost(ctx, "http://test/post/path", []byte(email), nil, time.Second*30)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func GetHttpData(ctx context.Context, params map[string]string) string {
+	_, err := go_util.HttpGet(ctx, "http://test/get/path", params, nil)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return "email"
 }
 
 func ChangeEmail(ctx context.Context, req model.ChangeEmailRequest) {
