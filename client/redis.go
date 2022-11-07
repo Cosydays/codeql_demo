@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"github.com/go-redis/redis"
+	"time"
 )
 
 var (
@@ -19,4 +20,8 @@ func InitRedisClient(ctx context.Context) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func SetValue2Redis(ctx context.Context, key string, value string) {
+	RedisClient.Set(ctx, key, value, time.Second*10)
 }

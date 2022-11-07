@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	"github.com/Cosydays/codeql_demo/client"
 	"github.com/Cosydays/codeql_demo/constant"
 	"github.com/Cosydays/codeql_demo/dal"
 	"github.com/Cosydays/codeql_demo/go_util"
@@ -32,6 +33,7 @@ func UpdateEmail(ctx context.Context, req model.UpdateEmailRequest) {
 	//field email flow to redis
 	redisKey := fmt.Sprintf(constant.KpA, "A")
 	dal.SetValue2Redis(ctx, redisKey, email)
+	client.SetValue2Redis(ctx, redisKey, email)
 
 	//get field httpEmail from http
 	httpEmail := GetHttpData(ctx, nil)
