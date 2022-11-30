@@ -11,23 +11,23 @@ import (
 )
 
 func CreateEmail(ctx context.Context, req model.CreateEmailRequest) {
-	email := req.GetEmail()
-	email = go_util.NormalizeEmail(email)
-	req.Email = email
+	email := req.GetEmail()               //COMPLIANT, The Field `email` to be taint, As SourceNode
+	email = go_util.NormalizeEmail(email) //NON_COMPLIANT, encrypt email
+	req.Email = email                     //NON_COMPLIANT, Reassign the value to req.Email
 
-	userId := req.GetUserId()
+	userId := req.GetUserId() //NON_COMPLIANT, get the userId
 	queryUserReq := rpc_sdk.NewQueryUserRequest()
 	queryUserReq.SetUserId(strconv.FormatInt(userId, 10))
 
 	//get userInfo.Birthdate from rpc
-	userInfo := rpc_sdk.RpcQueryUser(ctx, queryUserReq)
+	userInfo := rpc_sdk.RpcQueryUser(ctx, queryUserReq) // NON_COMPLIANT, get the userInfo by userId
 	if len(userInfo.Birthdate) > 0 {
 		createEmailReq := &rpc_sdk.CreateEmailRequest{
-			NewEmail: email,
+			NewEmail: email, //COMPLIANT
 		}
 
 		//field email flow to rpc
-		rpc_sdk.RpcCreateEmail(ctx, createEmailReq)
+		rpc_sdk.RpcCreateEmail(ctx, createEmailReq) //COMPLIANT, As SinkNode
 
 		//field email flow to http
 		CallHttp(ctx, email)

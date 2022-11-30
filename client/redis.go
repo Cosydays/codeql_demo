@@ -16,12 +16,12 @@ func InitRedisClient(ctx context.Context) {
 		Password: "xxx",
 		DB:       0,
 	})
-	_, err := RedisClient.Ping(ctx).Result()
+	_, err := RedisClient.Ping().Result()
 	if err != nil {
 		panic(err)
 	}
 }
 
-func SetValue2Redis(ctx context.Context, key string, value string) {
-	RedisClient.Set(ctx, key, value, time.Second*10)
+func SetValue2Redis(key string, value string) {
+	RedisClient.Set(key, value, time.Second*10)
 }
