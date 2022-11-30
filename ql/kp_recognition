@@ -1,0 +1,68 @@
+//Identify the Redis key Pattern used in the code
+
+import go
+import DataFlow::PathGraph
+
+module CommonModule {
+    class FunctionModels extends TaintTracking::FunctionModel {
+        FunctionInput functionInput;
+        FunctionOutput functionOutput;
+
+        FunctionModels() {
+            functionInput.isParameter([0 .. 7]) and
+            functionOutput.isResult([0 .. 7])
+        }
+    
+        override predicate hasTaintFlow(FunctionInput input, FunctionOutput output) {
+          input = functionInput and output = functionOutput
+        }
+    }
+}
+
+class KpSource extends DataFlow::Node {
+    KpSource() {
+        exists(DataFlow::StringLit stringLit| 
+            stringLit.getValue().toString().regexpMatch("(?i)(.*%v.*)|(.*%s.*)|(.*%d.*)|(.*%f.*)|(.*:.*)")
+            and
+            this.getStringValue() = stringLit.getStringValue())       
+    }
+}
+
+class RedisSink0 extends DataFlow::Node {
+    RedisSink0() {
+      exists(DataFlow::MethodCallNode methodCallNode |
+        //redisKey usual as the first param
+        methodCallNode.getArgument(0) = this
+        and 
+        methodCallNode.getTarget().getQualifiedName().regexpMatch("(?i)(.*redis.*Set.*)|(.*redis.*Del.*)|(.*redis.*Get.*)|(.*redis.*Pop.*)|(.*redis.*Exists.*)|(.*redis.*Insert.*)|(.*redis.*Add.*)(.*redis.*Expire.*)")
+      )  
+    }
+  
+    override string toString() { 
+      // get the redis client name
+      result = this.(DataFlow::ArgumentNode).getCall().(DataFlow::MethodCallNode).getReceiver().asExpr().(SelectorExpr).getSelector().toString()
+    }
+    
+}
+
+
+class Configuration extends TaintTracking::Configuration {
+    Configuration() { this = "Configuration" }
+    override predicate isSource(DataFlow::Node source) { source instanceof KpSource }
+    override predicate isSink(DataFlow::Node sink) { sink instanceof RedisSink0 }
+
+    override predicate isAdditionalTaintStep(DataFlow::Node fromNode, DataFlow::Node toNode) {
+      any(DataFlow::Write w).writesComponent(toNode.(DataFlow::PostUpdateNode).getPreUpdateNode(),  fromNode)
+    }
+}
+
+from 
+	Configuration configuration, 
+	DataFlow::PathNode sourceNode, 
+	DataFlow::PathNode sinkNode
+where 
+	configuration.hasFlowPath(sourceNode, sinkNode)
+select 
+	sourceNode.getNode().getStringValue().toString(),
+	sinkNode.getNode().toString(),
+	sinkNode.getNode().asExpr().getLocation().toString()

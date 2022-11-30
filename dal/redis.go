@@ -1,18 +1,17 @@
 package dal
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/Cosydays/codeql_demo/client"
 	"time"
 )
 
-func SetValue2Redis(ctx context.Context, key string, value string) {
-	client.RedisClient.Set(ctx, key, value, time.Second*10)
+func SetValue2Redis(key string, value string) {
+	client.RedisClient.Set(key, value, time.Second*10)
 }
 
-func GetRedisValue(ctx context.Context, key string) string {
+func GetRedisValue(key string) string {
 	fmt.Println(key)
-	return client.RedisClient.Get(ctx, key).Val()
+	return client.RedisClient.Get(key).Val()
 }

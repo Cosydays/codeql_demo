@@ -1,3 +1,3 @@
 package constant
 
-const KpA = "test_%v_kp"
+const KeyPatternA = "test_%v_kp"
