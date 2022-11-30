@@ -29,7 +29,7 @@ func main() {
 	createEmailReq := model.CreateEmailRequest{
 		UserId: 789,
 		Email:  "test3@email.com",
-		Status: "aa",
+		Status: "init",
 	}
 	handler.CreateEmail(ctx, createEmailReq)
 
