@@ -23,19 +23,6 @@ class GetEmailFunctionModel extends TaintTracking::FunctionModel {
 }
 
 /**
- * A predicate which traverses the data-flow graph from `rootFunc` for call nodes
- * and returns the set of all transitively reachable functions from `rootFunc`
- */
-private FuncDef getAReachableFunction(FuncDef rootFunc) {
-  result = rootFunc
-  or
-  exists(DataFlow::CallNode callNode |
-    callNode.getRoot() = rootFunc and
-    result = getAReachableFunction(callNode.getACallee())
-  )
-}
-
-/**
  * A `FieldReadNode` in a function that could be transitively called
  * by `CreateEmail`, with the field's base type `CreateEmailRequest`,
  * and the field name (case-insensitive) `Email`.
@@ -43,8 +30,7 @@ private FuncDef getAReachableFunction(FuncDef rootFunc) {
 class CreateEmailRequestEmailFieldReadSource extends DataFlow::FieldReadNode {
   CreateEmailRequestEmailFieldReadSource() {
     this.getField().getName().regexpMatch("(?i).*email.*") and
-    this.getBase().getType().getName() = "CreateEmailRequest" and
-    this.getRoot() = getAReachableFunction(any(FuncDef fd | fd.getName() = "CreateEmail"))
+    this.getBase().getType().getName().regexpMatch(".*Req.*")
   }
 }
 
@@ -58,7 +44,7 @@ class RequestFieldAssignNode extends DataFlow::Node {
 
   RequestFieldAssignNode() {
     exists(Field field |
-      field.getName() = fieldName and
+      fieldName = field.getName() and
       field.getAWrite().writesField(base, field, this) and
       base.getTypeBound().getName().regexpMatch(".*Req.*")
     )
