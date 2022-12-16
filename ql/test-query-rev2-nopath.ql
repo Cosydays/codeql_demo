@@ -8,23 +8,9 @@ import go
 import semmle.go.dataflow.TaintTracking
 
 /**
- * The `GetEmail` method of `CreateEmailRequest` which returns the `Email` field
- */
-class GetEmailFunctionModel extends TaintTracking::FunctionModel {
-  GetEmailFunctionModel() {
-    // TODO: correct qualified name
-    this.hasQualifiedName(_, "GetEmail")
-  }
-
-  override predicate hasTaintFlow(FunctionInput input, FunctionOutput output) {
-    input.isParameter(0) and output.isResult()
-  }
-}
-
-/**
  * A `FieldReadNode` in a function that could be transitively called
- * by `CreateEmail`, with the field's base type `CreateEmailRequest`,
- * and the field name (case-insensitive) `Email`.
+ * by `CreateEmail`, with the field's base type's name containing `Req`,
+ * and the field name containing (case-insensitive) `Email`.
  */
 class CreateEmailRequestEmailFieldReadSource extends DataFlow::FieldReadNode {
   CreateEmailRequestEmailFieldReadSource() {
