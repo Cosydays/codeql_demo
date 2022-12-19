@@ -1,12 +1,11 @@
 /**
  * @name Untrusted CreateEmail result passed to RpcCreateEmail
- * @kind path-problem
+ * @kind problem
  * @id go/unsafe-create-email-result-used-in-rpc
  */
 
 import go
 import semmle.go.dataflow.TaintTracking
-import DataFlow::PathGraph
 
 /**
  * A `FieldReadNode` in a function that could be transitively called
@@ -74,14 +73,9 @@ class CreateEmailToRpcConfiguration extends TaintTracking::Configuration {
   }
 }
 
-from
-  DataFlow::PathNode source, DataFlow::PathNode sink, DataFlow::FieldReadNode sourceFieldReadNode,
-  RPCFieldAssignSink sinkFieldAssignNode
-where
-  any(CreateEmailToRpcConfiguration config).hasFlowPath(source, sink) and
-  sourceFieldReadNode = source.getNode() and
-  sinkFieldAssignNode = sink.getNode()
-select sink, source, sink, "Unsanitized $@ field flows to $@ field, which is used in call to $@.",
+from DataFlow::FieldReadNode sourceFieldReadNode, RPCFieldAssignSink sinkFieldAssignNode
+where any(CreateEmailToRpcConfiguration config).hasFlow(sourceFieldReadNode, sinkFieldAssignNode)
+select sinkFieldAssignNode, "Unsanitized $@ field flows to $@ field, which is used in call to $@.",
   sourceFieldReadNode, sourceFieldReadNode.getField().getName(), sinkFieldAssignNode,
   sinkFieldAssignNode.getFieldName(), sinkFieldAssignNode.getSubsequentCallNode(),
   sinkFieldAssignNode.getSubsequentCallNode().getACallee().getName()
