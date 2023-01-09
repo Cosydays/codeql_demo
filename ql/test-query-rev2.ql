@@ -21,8 +21,7 @@ class CreateEmailRequestEmailFieldReadSource extends DataFlow::FieldReadNode {
 }
 
 /**
- * A data-flow node that is the RHS of an assignment to a field with
- * a base type name containing the substring "Req" (e.g. "Request")
+ * A data-flow node that is the RHS of an assignment to a field
  */
 class RequestFieldAssignNode extends DataFlow::Node {
   string fieldName;
@@ -31,8 +30,7 @@ class RequestFieldAssignNode extends DataFlow::Node {
   RequestFieldAssignNode() {
     exists(Field field |
       fieldName = field.getName() and
-      field.getAWrite().writesField(base, field, this) and
-      base.getTypeBound().getName().regexpMatch(".*Req.*")
+      field.getAWrite().writesField(base, field, this)
     )
   }
 
@@ -48,11 +46,31 @@ class RPCFieldAssignSink extends RequestFieldAssignNode {
   DataFlow::CallNode subsequentCall;
 
   RPCFieldAssignSink() {
-    TaintTracking::localTaint(this.getBase(), subsequentCall.getAnArgument()) and
-    subsequentCall.getTarget().getPackage().getPath().regexpMatch("(.*sdk.*)|(.*client.*)")
+    any(RPCFieldAssignToRpcConfiguration config)
+        .hasFlow(this.getBase(), subsequentCall.getAnArgument())
   }
 
   DataFlow::CallNode getSubsequentCallNode() { result = subsequentCall }
+}
+
+class RPCFieldAssignToRpcConfiguration extends TaintTracking2::Configuration {
+  RPCFieldAssignToRpcConfiguration() { this = "RPCFieldAssignToRpcConfiguration" }
+
+  override predicate isSource(DataFlow::Node source) {
+    source = any(RequestFieldAssignNode node).getBase()
+  }
+
+  override predicate isSink(DataFlow::Node sink) {
+    sink =
+      any(DataFlow::CallNode node |
+        node.getTarget().getPackage().getPath().regexpMatch("(.*sdk.*)|(.*client.*)")
+      ).getAnArgument()
+  }
+
+  override predicate isAdditionalTaintStep(DataFlow::Node node1, DataFlow::Node node2) {
+    any(DataFlow::Write w)
+        .writesComponent(node2.(DataFlow::PostUpdateNode).getPreUpdateNode(), node1)
+  }
 }
 
 /**
@@ -67,11 +85,6 @@ class CreateEmailToRpcConfiguration extends TaintTracking::Configuration {
   }
 
   override predicate isSink(DataFlow::Node sink) { sink instanceof RPCFieldAssignSink }
-
-  override predicate isAdditionalTaintStep(DataFlow::Node node1, DataFlow::Node node2) {
-    any(DataFlow::Write w)
-        .writesComponent(node2.(DataFlow::PostUpdateNode).getPreUpdateNode(), node1)
-  }
 }
 
 from
