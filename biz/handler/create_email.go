@@ -21,12 +21,33 @@ func CreateEmail(ctx context.Context, req model.CreateEmailRequest) {
 	//get userInfo.Birthdate from rpc
 	userInfo := rpc_sdk.RpcQueryUser(ctx, queryUserReq) // not tainted
 	if len(userInfo.Birthdate) > 0 {
-		createEmailReq := &rpc_sdk.CreateEmailRequest{
+		//field email flow to rpc， 4 type case
+		//case1, covered
+		createEmailReq0 := &rpc_sdk.CreateEmailRequest{
 			NewEmail: email, // tainted
 		}
+		rpc_sdk.RpcCreateEmail(ctx, createEmailReq0) // tainted, sink
 
-		//field email flow to rpc
-		rpc_sdk.RpcCreateEmail(ctx, createEmailReq) // tainted, sink
+		//case2, covered
+		createEmailReq1 := &rpc_sdk.CreateEmailRequest{}
+		createEmailReq1.NewEmail = email
+		rpc_sdk.RpcCreateEmail(ctx, createEmailReq1) // tainted, sink
+
+		//case3, covered
+		emailInfo0 := rpc_sdk.EmailInfo{
+			NewEmailV2: email,
+			Extra:      "test_extra",
+		}
+		createEmailReqV20 := &rpc_sdk.CreateEmailV2Request{}
+		createEmailReqV20.EmailInfo = emailInfo0
+		rpc_sdk.RpcCreateEmailV2(ctx, createEmailReqV20)
+
+		//case4, not covered
+		emailInfo1 := rpc_sdk.EmailInfo{}
+		emailInfo1.NewEmailV2 = email
+		createEmailReqV21 := &rpc_sdk.CreateEmailV2Request{}
+		createEmailReqV21.EmailInfo = emailInfo1
+		rpc_sdk.RpcCreateEmailV2(ctx, createEmailReqV21) // tainted, sink
 
 		//field email flow to http
 		CallHttp(ctx, email)

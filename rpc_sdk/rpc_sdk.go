@@ -101,6 +101,33 @@ func RpcCreateEmail(ctx context.Context, req *CreateEmailRequest) {
 	fmt.Println(req.NewEmail)
 }
 
+//CreateEmailV2
+type CreateEmailV2Request struct {
+	Id        string    `json:"id"`
+	EmailInfo EmailInfo `json:"emailInfo"`
+}
+
+type EmailInfo struct {
+	NewEmailV2 string `json:"new_email_v2"`
+	Extra      string `json:"extra"`
+}
+
+func NewCreateEmailV2Request() *CreateEmailV2Request {
+	return &CreateEmailV2Request{}
+}
+
+func (p *CreateEmailV2Request) GetId() (v string) {
+	return p.Id
+}
+
+func (p *CreateEmailV2Request) GetEmailInfo() (v EmailInfo) {
+	return p.EmailInfo
+}
+
+func RpcCreateEmailV2(ctx context.Context, req *CreateEmailV2Request) {
+	fmt.Println(req.EmailInfo.NewEmailV2)
+}
+
 //ChangeEmail
 type ChangeEmailRequest struct {
 	Id       string `json:"id"`
