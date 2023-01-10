@@ -9,8 +9,7 @@ import semmle.go.dataflow.TaintTracking
 import DataFlow::PathGraph
 
 /**
- * A `FieldReadNode` in a function that could be transitively called
- * by `CreateEmail`, with the field's base type's name containing `Req`,
+ * A `FieldReadNode` with the field's base type's name containing `Req`,
  * and the field name containing (case-insensitive) `Email`.
  */
 class CreateEmailRequestEmailFieldReadSource extends DataFlow::FieldReadNode {
@@ -85,6 +84,13 @@ class CreateEmailToRpcConfiguration extends TaintTracking::Configuration {
   }
 
   override predicate isSink(DataFlow::Node sink) { sink instanceof RPCFieldAssignSink }
+
+  override predicate isAdditionalTaintStep(DataFlow::Node node1, DataFlow::Node node2) {
+    any(DataFlow::Write w)
+        .writesComponent(node2.(DataFlow::PostUpdateNode).getPreUpdateNode(), node1)
+  }
+
+  override predicate isSanitizerOut(DataFlow::Node node) { isSink(node) }
 }
 
 from
