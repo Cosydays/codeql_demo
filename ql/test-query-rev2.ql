@@ -8,15 +8,51 @@ import go
 import semmle.go.dataflow.TaintTracking
 import DataFlow::PathGraph
 
+abstract class RPCFieldAssignDataSource extends DataFlow::Node {
+  abstract string getDescription();
+}
+
 /**
  * A `FieldReadNode` with the field's base type's name containing `Req`,
  * and the field name containing (case-insensitive) `Email`.
  */
-class CreateEmailRequestEmailFieldReadSource extends DataFlow::FieldReadNode {
-  CreateEmailRequestEmailFieldReadSource() {
+class EmailRequestFieldReadSource extends RPCFieldAssignDataSource, DataFlow::FieldReadNode {
+  EmailRequestFieldReadSource() {
     this.getField().getName().regexpMatch("(?i).*email.*") and
     this.getBase().getType().getName().regexpMatch(".*Req.*")
   }
+
+  override string getDescription() { result = this.getFieldName() + " field" }
+}
+
+/**
+ * The result of a `CallNode` to `GetRedisValue` with the argument `"id"`
+ */
+class RedisIdFieldReadSource extends RPCFieldAssignDataSource, DataFlow::Node {
+  RedisIdFieldReadSource() {
+    exists(DataFlow::CallNode cn |
+      this = cn.getResult() and
+      cn.getTarget().getName() = "GetRedisValue" and
+      // improve this with local data-flow to also find calls where the arg is a var
+      cn.getArgument(0).asExpr().getStringValue() = "id"
+    )
+  }
+
+  override string getDescription() { result = "Redis 'id' field" }
+}
+
+/**
+ * The result of a `CallNode` to `GetHttpData`
+ */
+class GetHttpDataFieldReadSource extends RPCFieldAssignDataSource, DataFlow::Node {
+  GetHttpDataFieldReadSource() {
+    exists(DataFlow::CallNode cn |
+      this = cn.getResult() and
+      cn.getTarget().getName() = "GetHttpData"
+    )
+  }
+
+  override string getDescription() { result = "GetHttpData call result" }
 }
 
 /**
@@ -73,15 +109,13 @@ class RPCFieldAssignToRpcConfiguration extends TaintTracking2::Configuration {
 }
 
 /**
- * A taint-tracking configuration representing flow from a `CreateEmailRequestEmailFieldReadSource`
+ * A taint-tracking configuration representing flow from a `RPCFieldAssignDataSource`
  * to a `RPCFieldAssignSink` with additional taint steps from field writes to their base.
  */
-class CreateEmailToRpcConfiguration extends TaintTracking::Configuration {
-  CreateEmailToRpcConfiguration() { this = "CreateEmailToRpcConfiguration" }
+class CreateEmailToRpcFieldAssignSinkConfiguration extends TaintTracking::Configuration {
+  CreateEmailToRpcFieldAssignSinkConfiguration() { this = "CreateEmailToRpcConfiguration" }
 
-  override predicate isSource(DataFlow::Node source) {
-    source instanceof CreateEmailRequestEmailFieldReadSource
-  }
+  override predicate isSource(DataFlow::Node source) { source instanceof RPCFieldAssignDataSource }
 
   override predicate isSink(DataFlow::Node sink) { sink instanceof RPCFieldAssignSink }
 
@@ -94,13 +128,13 @@ class CreateEmailToRpcConfiguration extends TaintTracking::Configuration {
 }
 
 from
-  DataFlow::PathNode source, DataFlow::PathNode sink, DataFlow::FieldReadNode sourceFieldReadNode,
+  DataFlow::PathNode source, DataFlow::PathNode sink, RPCFieldAssignDataSource sourceFieldReadNode,
   RPCFieldAssignSink sinkFieldAssignNode
 where
-  any(CreateEmailToRpcConfiguration config).hasFlowPath(source, sink) and
+  any(CreateEmailToRpcFieldAssignSinkConfiguration config).hasFlowPath(source, sink) and
   sourceFieldReadNode = source.getNode() and
   sinkFieldAssignNode = sink.getNode()
-select sink, source, sink, "Unsanitized $@ field flows to $@ field, which is used in call to $@.",
-  sourceFieldReadNode, sourceFieldReadNode.getField().getName(), sinkFieldAssignNode,
+select sink, source, sink, "Unsanitized $@ flows to $@ field, which is used in call to $@.",
+  sourceFieldReadNode, sourceFieldReadNode.getDescription(), sinkFieldAssignNode,
   sinkFieldAssignNode.getFieldName(), sinkFieldAssignNode.getSubsequentCallNode(),
   sinkFieldAssignNode.getSubsequentCallNode().getACallee().getName()
