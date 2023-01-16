@@ -22,9 +22,9 @@
          exists(DataFlow::FieldReadNode fieldReadNode |
              this = fieldReadNode
              and
-             fieldReadNode.getField().getName().regexpMatch("(?i).*email.*") //填充Field
+             fieldReadNode.getField().getName().regexpMatch("(?i).*email.*")
              and
-             fieldReadNode.getRoot() = getAReachableFunction(any(FuncDef fd | fd.getName() = "CreateEmail")) //填充Method
+             fieldReadNode.getRoot() = getAReachableFunction(any(FuncDef fd | fd.getName() = "CreateEmail"))
          )
      }
  }
@@ -39,7 +39,7 @@
              and
              field.getAWrite().writesField(base, field, this)
              and
-             base.getTypeBound().getName().regexpMatch("(?i)(.*Req.*)") //这个条件待定
+             base.getTypeBound().getName().regexpMatch("(?i)(.*Req.*)")
          )
      }
 
